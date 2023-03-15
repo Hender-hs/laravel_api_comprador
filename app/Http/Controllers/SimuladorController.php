@@ -14,9 +14,12 @@ class SimuladorController extends Controller
         $this->carregarArquivoDadosSimulador()
              ->simularEmprestimo($request->valor_emprestimo)
              ->filtrarInstituicao($request->instituicoes)
+             ->filtrarConvenio($request->convenios)
+             ->filtrarParcelas($request->parcela)
         ;
         return \response()->json($this->simulacao);
     }
+
 
     private function carregarArquivoDadosSimulador() : self
     {
@@ -55,6 +58,69 @@ class SimuladorController extends Controller
                 }
             }
             $this->simulacao = $arrayAux;
+        }
+        return $this;
+    }
+
+    private function filtrarConvenio(array $paramConvenios) : self
+    {
+
+        if (\count($paramConvenios))
+        {
+            foreach ($this->simulacao as $key => $instituicao)
+            {
+                $propostasFiltradas = [];
+
+                foreach ($instituicao as $proposta)
+                {
+                    foreach ($paramConvenios as $convenio)
+                    {
+                        if ($proposta["convenio"] == $convenio)
+                        {
+                            \array_push($propostasFiltradas, $proposta);
+                        }
+                    }
+                }
+
+                if (!\count($propostasFiltradas))
+                {
+                    unset($this->simulacao[$key]);
+                }
+                else
+                {
+                    $this->simulacao[$key] = $propostasFiltradas;
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    private function filtrarParcelas(int $numParcelas) : self
+    {
+        if ($numParcelas)
+        {
+            foreach ($this->simulacao as $key => $instituicao)
+            {
+                $propostasFiltradas = [];
+
+                foreach ($instituicao as $proposta)
+                {
+                    if ($proposta["parcelas"] == $numParcelas)
+                    {
+                        \array_push($propostasFiltradas, $proposta);
+                    }
+                }
+
+                if (!\count($propostasFiltradas))
+                {
+                    unset($this->simulacao[$key]);
+                }
+                else
+                {
+                    $this->simulacao[$key] = $propostasFiltradas;
+                }
+            }
         }
         return $this;
     }
